@@ -1,0 +1,16 @@
+server:
+  port: 8001
+gateway:
+  route:
+    configs:
+      - path: /
+#        hostnames: ["localhost"]
+        proxy:
+          healthCheck:
+              path: /favicon.ico
+              status: 200,302
+          upstreams:
+            - host: http://192.168.0.12:9700
+              weight: 100
+            - host: http://localhost:6001
+              weight: 0
