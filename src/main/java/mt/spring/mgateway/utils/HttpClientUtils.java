@@ -60,7 +60,7 @@
 //
 //	public void forward(CloseableHttpClient httpClient, HttpServletRequest request, HttpServletResponse response) throws IOException {
 //		MultiValueMap<String, String> headers = buildZuulRequestHeaders(request);
-//		MultiValueMap<String, String> params = buildZuulRequestQueryParams(request);
+//		MultiValueMap<String, String> params = HttpClientServletUtils.getQueryParams(request);
 //		String verb = request.getMethod().toUpperCase();
 //		InputStream requestEntity = request.getInputStream();
 ////		if (getContentLength(request) < 0) {
@@ -72,7 +72,7 @@
 //		try {
 //			CloseableHttpResponse closeableHttpResponse = forward(httpClient, verb, uri, request, headers, params, requestEntity);
 //			setResponse(closeableHttpResponse);
-//			addResponseHeaders();
+//			addResponseHeaders(closeableHttpResponse, response);
 //			writeResponse();
 //		} catch (Exception ex) {
 //			throw new RuntimeException(ex);
@@ -171,20 +171,6 @@
 //			default:
 //				return true;
 //		}
-//	}
-//
-//	public MultiValueMap<String, String> buildZuulRequestQueryParams(HttpServletRequest request) {
-//		Map<String, List<String>> map = HTTPRequestUtils.getInstance().getQueryParams();
-//		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-//		if (map == null) {
-//			return params;
-//		}
-//		for (String key : map.keySet()) {
-//			for (String value : map.get(key)) {
-//				params.add(key, value);
-//			}
-//		}
-//		return params;
 //	}
 //
 //	public String buildZuulRequestURI(HttpServletRequest request) {
@@ -351,8 +337,7 @@
 //				String body = context.getResponseBody();
 //				is = new ByteArrayInputStream(
 //						body.getBytes(servletResponse.getCharacterEncoding()));
-//			}
-//			else {
+//			} else {
 //				is = context.getResponseDataStream();
 //				if (is != null && context.getResponseGZipped()) {
 //					// if origin response is gzipped, and client has not requested gzip,
@@ -360,8 +345,7 @@
 //					// else, stream gzip directly to client
 //					if (isGzipRequested(context)) {
 //						servletResponseContentEncoding = "gzip";
-//					}
-//					else {
+//					} else {
 //						servletResponseContentEncoding = null;
 //						is = handleGzipStream(is);
 //					}
@@ -375,13 +359,11 @@
 //			if (is != null) {
 //				writeResponse(is, outStream);
 //			}
-//		}
-//		finally {
+//		} finally {
 //			if (is != null) {
 //				try {
 //					is.close();
-//				}
-//				catch (Exception ex) {
+//				} catch (Exception ex) {
 //					log.warn("Error while closing upstream input stream", ex);
 //				}
 //			}
@@ -398,8 +380,7 @@
 //				}
 //				outStream.flush();
 //				// The container will close the stream for us
-//			}
-//			catch (IOException ex) {
+//			} catch (IOException ex) {
 //				log.warn("Error while sending response to client: " + ex.getMessage());
 //			}
 //		}
@@ -412,14 +393,12 @@
 //		RecordingInputStream stream = new RecordingInputStream(in);
 //		try {
 //			return new GZIPInputStream(stream);
-//		}
-//		catch (java.util.zip.ZipException | java.io.EOFException ex) {
+//		} catch (java.util.zip.ZipException | java.io.EOFException ex) {
 //
 //			if (stream.getBytesRead() == 0) {
 //				// stream was empty, return the original "empty" stream
 //				return in;
-//			}
-//			else {
+//			} else {
 //				// reset the stream and assume an unencoded response
 //				log.warn(
 //						"gzip response expected but failed to read gzip headers, assuming unencoded response for request "
@@ -429,8 +408,7 @@
 //				stream.reset();
 //				return stream;
 //			}
-//		}
-//		finally {
+//		} finally {
 //			stream.stopRecording();
 //		}
 //	}
@@ -463,19 +441,11 @@
 //		}
 //	}
 //
-//	private void addResponseHeaders(CloseableHttpResponse closeableHttpResponse,HttpServletResponse response) {
+//	private void addResponseHeaders(CloseableHttpResponse closeableHttpResponse, HttpServletResponse response) {
 //		Header[] allHeaders = closeableHttpResponse.getAllHeaders();
-//		if (includeContentLengthHeader(context)) {
-//			Long contentLength = context.getOriginContentLength();
-//			if (useServlet31) {
-//				servletResponse.setContentLengthLong(contentLength);
-//			}
-//			else {
-//				// Try and set some kind of content length if we can safely convert the
-//				// Long to an int
-//				if (isLongSafe(contentLength)) {
-//					servletResponse.setContentLength(contentLength.intValue());
-//				}
+//		for (Header allHeader : allHeaders) {
+//			if (!"Content-Encoding".equalsIgnoreCase(allHeader.getName())) {
+//				response.addHeader(allHeader.getName(), allHeader.getValue());
 //			}
 //		}
 //	}

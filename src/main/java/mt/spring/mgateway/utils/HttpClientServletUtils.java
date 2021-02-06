@@ -33,18 +33,6 @@ import java.util.*;
 import java.util.zip.GZIPInputStream;
 
 public class HttpClientServletUtils {
-
-//	public static CloseableHttpResponse forward(CloseableHttpClient httpclient, String method, String uri, HttpServletRequest request, MultiValueMap<String, String> headers, MultiValueMap<String, String> params, InputStream requestEntity) throws Exception {
-//		long contentLength = request.getContentLength();
-//		ContentType contentType = null;
-//		if (request.getContentType() != null) {
-//			contentType = ContentType.parse(request.getContentType());
-//		}
-//		InputStreamEntity entity = new InputStreamEntity(requestEntity, contentLength, contentType);
-//		HttpRequest httpRequest = buildHttpRequest(method, uri, entity, headers, params, request);
-//		HttpHost httpHost = getHttpHost(new URL(uri));
-//		return forwardRequest(httpclient, httpHost, httpRequest);
-//	}
 	
 	public static MultiValueMap<String, String> getRequestHeaders(HttpServletRequest request) {
 		MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
@@ -200,12 +188,28 @@ public class HttpClientServletUtils {
 		void beforeWriteContent(CloseableHttpResponse closeableHttpResponse, HttpServletResponse response);
 	}
 	
+	private static boolean isIgnoreHeader(String name) {
+		List<String> ignoreList = Arrays.asList("Access-Control-Allow-Origin",
+				"Access-Control-Request-Method",
+				"Access-Control-Request-Headers",
+				"Access-Control-Max-Age",
+				"Access-Control-Allow-Credentials",
+				"Content-Encoding","Transfer-Encoding");
+		for (String ignore : ignoreList) {
+			if (ignore.equalsIgnoreCase(name)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	public static void writeResponse(CloseableHttpResponse closeableHttpResponse, HttpServletRequest request, HttpServletResponse response, OutputStream outputStream, @Nullable Map<String, String> responseHeaders, @Nullable ResponseHandler responseHandler) throws Exception {
 		Header[] allHeaders = closeableHttpResponse.getAllHeaders();
 		for (Header header : allHeaders) {
-			if (!"Content-Encoding".equalsIgnoreCase(header.getName())) {
-				response.addHeader(header.getName(), header.getValue());
+			if (isIgnoreHeader(header.getName())) {
+				continue;
 			}
+			response.setHeader(header.getName(), header.getValue());
 		}
 		response.setStatus(closeableHttpResponse.getStatusLine().getStatusCode());
 		if (responseHeaders != null) {
@@ -231,9 +235,6 @@ public class HttpClientServletUtils {
 			} finally {
 				if (content != null) {
 					content.close();
-				}
-				if (outputStream != null) {
-					outputStream.close();
 				}
 			}
 		}
