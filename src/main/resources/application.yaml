@@ -13,19 +13,19 @@ gateway:
               status: 200,302
           #下游服务
           upstreams:
-            - host: http://localhost:9700
-              #权重
-              weight: 100
-              #新增请求头
-              addRequestHeaders:
-                Host: test.host.com
-              #新增响应头
-              addResponseHeaders:
-                Host: "{request.host}"
-              #替换响应头中的字符
-              replaceResponseHeaders:
-                Location:
-                  replace: test.host.com
-                  as: "{request.host}"
+#            - host: http://localhost:9700
+#              #权重
+#              weight: 100
+#              #新增请求头
+#              addRequestHeaders:
+#                Host: test.host.com
+#              #新增响应头
+#              addResponseHeaders:
+#                Host: "{request.host}"
+#              #替换响应头中的字符
+#              replaceResponseHeaders:
+#                Location:
+#                  replace: test.host.com
+#                  as: "{request.host}"
             - host: http://localhost:6001
               weight: 0
